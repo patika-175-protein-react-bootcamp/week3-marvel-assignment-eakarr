@@ -4,8 +4,9 @@ import axios from "axios";
 import marvelLogo from "./assets/marvel-logo.png";
 import marvelBackground from "./assets/super-heroes.png";
 
-const hash = "2a1c1fd9ff3e606ef95c9fc9f3cd45d7";
-const apikey = "1ec87bb86921fb33493233a6d71c8a6d";
+const limit = 12;
+const hash = "2a1c1fd9ff3e606ef95c9fc9f3cd45d7"; // Required for fetching the data!
+const apikey = "1ec87bb86921fb33493233a6d71c8a6d"; // Public apikey.
 const baseURL = "https://gateway.marvel.com:443/v1/public";
 
 const service = axios.create({
@@ -16,48 +17,99 @@ const App = () => {
   const [offset, setOffset] = useState(0);
   const [characters, setCharacters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [totalCharacters, setTotalCharacters] = useState(0);
 
+  ////////////////////////////////// LocalStorage Logic Start //////////////////////////////////
   const saveData = useCallback((offset, characters) => {
     localStorage.setItem(offset, JSON.stringify(characters));
+  }, []);
+
+  const saveTotalCharacterCount = useCallback((count) => {
+    localStorage.setItem("totalCharacterCount", count);
+  }, []);
+
+  const getTotalCharacterCount = useCallback(() => {
+    return localStorage.getItem("totalCharacterCount");
   }, []);
 
   const getSavedData = useCallback((key) => {
     const data = localStorage.getItem(key);
     return JSON.parse(data);
   }, []);
+  ////////////////////////////////// LocalStorage Logic End //////////////////////////////////
 
+  ////////////////////////////////// Fetching Data Logic Start //////////////////////////////////
   const fetchData = useCallback(
-    async (offset = 0) => {
+    async (offset) => {
       const savedData = getSavedData(offset);
 
       if (savedData) {
         setCharacters(savedData);
+        const totalCharacters = getTotalCharacterCount();
+        setTotalCharacters(totalCharacters);
+        window.scrollTo(0, 0);
         return;
-      }
+      } // If the characters are already saved in our localStorage, then there is no need to continue for fetching the data.
 
       try {
         setIsLoading(true);
 
         const result = await service.get("/characters", {
-          params: { ts: 1, limit: 12, offset: offset * 12, apikey, hash },
+          params: { ts: 1, limit, offset: offset * 12, apikey, hash },
         });
+        // console.log(result) // This actually shows us that the data we want is in data.data.results
+
+        const totalCharacters = result.data.data.total;
 
         const characters = result.data.data.results;
 
+        setTotalCharacters(totalCharacters);
         setCharacters(characters);
         saveData(offset, characters);
+        saveTotalCharacterCount(totalCharacters);
       } catch (error) {
         console.log(error);
       } finally {
         setIsLoading(false);
+        window.scrollTo(0, 0);
       }
     },
-    [getSavedData, saveData]
+    [getSavedData, saveData, saveTotalCharacterCount, getTotalCharacterCount]
   );
 
   useEffect(() => {
     fetchData(offset);
   }, [fetchData, offset]);
+  ////////////////////////////////// Fetching Data Logic Start //////////////////////////////////
+
+  ////////////////////////////////// Pagination Logic Start //////////////////////////////////
+  const onPrevClick = () => {
+    setOffset((prev) => {
+      let page = prev - 1;
+      if (page < 0) {
+        page = 0;
+      }
+      return page;
+    });
+  };
+
+  const onNextClick = () => {
+    setOffset((prev) => {
+      let page = prev + 1;
+      if (page > pageNumbers.length - 1) {
+        page = pageNumbers.length - 1;
+      }
+      return page;
+    });
+  };
+
+  const pageNumbers = [];
+
+  for (let i = 1; i <= totalCharacters / (limit * 10); i++) {
+    pageNumbers.push(i);
+  }
+
+  ////////////////////////////////// Pagination Logic End //////////////////////////////////
 
   return (
     <div className="container">
@@ -79,6 +131,7 @@ const App = () => {
         />
       </div>
       {/* <!-- ////////////////////////////////// Upper Side Container End //////////////////////////////////--> */}
+
       {/* <!-- ////////////////////////////////// Down Side Container Start //////////////////////////////////--> */}
       <div className="down-side-container">
         {characters?.map((character) => {
@@ -102,7 +155,7 @@ const App = () => {
         })}
       </div>
       {isLoading && (
-        <p
+        <div
           style={{
             color: "white",
             display: "flex",
@@ -112,31 +165,32 @@ const App = () => {
           }}
         >
           Data is loading...
-        </p>
+        </div>
       )}
       {/* <!-- ////////////////////////////////// Down Side Container End //////////////////////////////////--> */}
+
       {/* <!-- ////////////////////////////////// Pagination Start //////////////////////////////////--> */}
       <div className="pagination">
         <ul>
-          <li
-            className="previous"
-            onClick={() => setOffset((prev) => prev - 1)}
-          >
+          <li className="previous" onClick={onPrevClick}>
             {"<"}
           </li>
-          <li>1</li>
-          <li>...</li>
-          <li>99</li>
-          <li className="current-page">100</li>
-          <li>101</li>
-          <li>...</li>
-          <li>200</li>
-          <li className="next" onClick={() => setOffset((prev) => prev + 1)}>
+          {pageNumbers.map((number) => (
+            <li
+              key={number}
+              className={number - 1 === offset ? "current-page" : undefined}
+              onClick={() => setOffset(number - 1)}
+            >
+              {number}
+            </li>
+          ))}
+          <li className="next" onClick={onNextClick}>
             {">"}
           </li>
         </ul>
       </div>
       {/* <!-- ////////////////////////////////// Pagination End //////////////////////////////////--> */}
+
       {/* <!-- ////////////////////////////////// Container End //////////////////////////////////--> */}
     </div>
   );

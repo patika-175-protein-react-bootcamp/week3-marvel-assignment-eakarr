@@ -15,8 +15,6 @@ const Pagination = (props) => {
 
   if (pageNumbers.length === 0) return null;
 
-  console.log(offset, pageNumbers[pageNumbers.length - 4]);
-
   return (
     <ul>
       {offset >= 4 ? (

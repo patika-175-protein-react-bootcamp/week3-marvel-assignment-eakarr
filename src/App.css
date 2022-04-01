@@ -161,7 +161,7 @@ body {
 
 /* //////////////////// Mobile End //////////////////// */
 
-@media screen and (max-width: 1040px) {
+@media screen and (max-width: 1070px) {
   .down-side-container > div {
     width: 100%;
   }

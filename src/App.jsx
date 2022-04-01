@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import "./App.css";
 import axios from "axios";
+import Pagination from "./components/pagination/index";
 import marvelLogo from "./assets/marvel-logo.png";
 import marvelBackground from "./assets/super-heroes.png";
 
@@ -74,7 +75,7 @@ const App = () => {
         window.scrollTo(0, 0);
       }
     },
-    [getSavedData, saveData, saveTotalCharacterCount, getTotalCharacterCount]
+    [saveData, getSavedData, saveTotalCharacterCount, getTotalCharacterCount]
   );
 
   useEffect(() => {
@@ -105,10 +106,9 @@ const App = () => {
 
   const pageNumbers = [];
 
-  for (let i = 1; i <= totalCharacters / (limit * 10); i++) {
+  for (let i = 1; i <= Math.ceil(totalCharacters / limit); i++) {
     pageNumbers.push(i);
   }
-
   ////////////////////////////////// Pagination Logic End //////////////////////////////////
 
   return (
@@ -171,23 +171,13 @@ const App = () => {
 
       {/* <!-- ////////////////////////////////// Pagination Start //////////////////////////////////--> */}
       <div className="pagination">
-        <ul>
-          <li className="previous" onClick={onPrevClick}>
-            {"<"}
-          </li>
-          {pageNumbers.map((number) => (
-            <li
-              key={number}
-              className={number - 1 === offset ? "current-page" : undefined}
-              onClick={() => setOffset(number - 1)}
-            >
-              {number}
-            </li>
-          ))}
-          <li className="next" onClick={onNextClick}>
-            {">"}
-          </li>
-        </ul>
+        <Pagination
+          offset={offset}
+          onChange={setOffset}
+          pageNumbers={pageNumbers}
+          onPrevClick={onPrevClick}
+          onNextClick={onNextClick}
+        />
       </div>
       {/* <!-- ////////////////////////////////// Pagination End //////////////////////////////////--> */}
 

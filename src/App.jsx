@@ -164,7 +164,7 @@ const App = () => {
             backgroundColor: "red",
           }}
         >
-          Data is loading...
+          Loading...
         </div>
       )}
       {/* <!-- ////////////////////////////////// Down Side Container End //////////////////////////////////--> */}
